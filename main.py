@@ -1,9 +1,12 @@
 import requests
 import bs4
 import pandas as pd
+import os
+import pickle
 
 
-PAGES = 1
+STARTING_PAGE = 1
+ENDING_PAGE = 5
 
 
 def get_list_of_pages(number):
@@ -30,23 +33,38 @@ def get_number_of_page(page):
 
 
 def main():
-    links = []
-    data = []
+    try:
+        with open('links.pkl', 'rb') as file:
+            links = pickle.load(file)
+    except:
+        links = []
+    try:
+        with open('data.pkl', 'rb') as file:
+            data = pickle.load(file)
+    except:
+        data = []
 
     print("Starting to scrape", flush=True)
-    for i in range(1, PAGES+1):
+    continue_page = STARTING_PAGE
+    if links:
+        continue_page += len(links)//10
+    for i in range(continue_page, ENDING_PAGE+1):
         page_links = get_list_of_pages(i)
         links.extend(page_links)
-        print("\rFetched", len(links), "from", PAGES * 10, end="", flush=True)
+        print("\rFetched", len(links), "from", ENDING_PAGE * 10, end="", flush=True)
+        with open('links.pkl', 'wb') as file:
+            pickle.dump(links, file)
 
     print("\n\nStarting main process")
-    number = 0
+    number = len(data)
     for link in links:
         number += 1
         print("\nFetching data number", number, "of", len(links), link, end="", flush="")
         value = get_number_of_page(link)
         print("\rFetched data", number, "of", len(links), "URL: ", link, end="", flush="")
         data.append(value)
+        with open('data.pkl', 'wb') as file:
+            pickle.dump(data, file)
 
     print()
     print("Finished")
